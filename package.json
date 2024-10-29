@@ -1,0 +1,23 @@
+{
+  "name": "todo_express",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+  "start": "nodemon index.js"
+  },
+  "keywords": [
+    "\"web\"",
+    "\"express\"",
+    "\"template\"",
+    "\"ejs\""
+  ],
+  "author": "Taavi Orro",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "express": "^4.21.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.7"
+  }
+}
