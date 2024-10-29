@@ -7,7 +7,8 @@ app.set('view engine', 'ejs')
 app.set('views', path.join(__dirname, 'views'))
 
 app.get('/', (req, res)=> {
-    res.render('index')
+    const tasks = ['Study JS', 'Study templating', 'Study HTTP'] 
+    res.render('index', {tasks: tasks})
 })
 
 app.listen(3001, ()=> {
