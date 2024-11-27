@@ -14,80 +14,92 @@ const tasksFile = './tasks';
 const readFile = (filename) => {
     return new Promise((resolve, reject) => {
         
-        fs.access(filename, fs.constants.F_OK, (err) => {
+        fs.readFile(filename, 'utf8', (err, data) => {
             if (err) {
-               
-                fs.writeFile(filename, '', (err) => {
-                    if (err) {
-                        console.error("Error creating tasks file:", err);
-                        return reject(err);
-                    }
-                    resolve([]);
-                });
-            } else {
-            
-                fs.readFile(filename, 'utf8', (err, data) => {
-                    if (err) {
-                        console.error(err);
-                        return reject(err); 
-                    }
-                    const tasks = data.split("\n").filter(task => task.trim() !== ''); // Remove empty tasks
-                    resolve(tasks); 
-                });
-            }
+               console.error(err);
+               return;
+              }
+              const tasks = JSON.parse(data)
+              resolve(tasks)
         });
     });
 };
 
+const writeFile = (filename, data) => {
+    return new  Promise((resolve, reject)=> {
+        fs.writeFile(filename, data, 'utf8', err => {
+            if(err) {
+                console.error(err);
+                return;
+            }
+            resolve(true)
+        })
+    })
+}
+
 app.use(express.urlencoded({ extended: true }));
 
 
-app.get('/', (req, res) => {
-    readFile(tasksFile)
+app.post('/', (req, res)=> {
+    let error = null
+    if (req.body.task.trim().length==0) {
+        error = 'please insert correct task data'
+        readFile('/tasks.json')
         .then(tasks => {
-            console.log(tasks);
-            res.render('index', { tasks: tasks });
+            res.render('index', {
+                tasks: tasks,
+                error: error
+            })
         })
-        .catch(err => {
-            console.error("Error reading tasks file:", err);
-            res.status(500).send('Error reading tasks');
-        });
-});
+    }
+})
 
 
 app.post('/', (req, res) => {
-    readFile(tasksFile)
-        .then(tasks => {
-            
-            tasks.push(req.body.task.trim()); 
-            const data = tasks.join("\n"); 
-            fs.writeFile(tasksFile, data, err => {
-                if (err) {
-                    console.error(err);
-                    return res.status(500).send('Error saving task');
-                }
-                res.redirect('/'); 
-            });
+    readFile('./tasks.json')
+    .then(tasks => {
+        let index
+        if(tasks.lenght ===0)
+        {
+            index = 0
+        } else {
+            index = tasks[tasks.length-1].id + 1;
+        }
+        const newTask = {
+            "id" : index,
+            "task" : req.body.task
+        }
+        tasks.push(newTask)
+        data = JSON.stringify(tasks, null, 2)
+        writeFile('tasks.json', data)
+        res.redirect('/')
         })
-        .catch(err => {
-            console.error("Error reading tasks file:", err);
-            res.status(500).send('Error reading tasks');
-        });
-});
+})
 
-
-fs.access(tasksFile, fs.constants.F_OK, (err) => {
-    if (err) {
-        
-        fs.writeFile(tasksFile, '', (err) => {
-            if (err) {
-                console.error("Error creating tasks file:", err);
-            } else {
-                console.log("Tasks file created.");
+app.get('/delete-task/:taskId', (req, res) => {
+    let deletedTaskId = parsenInt(req.params.taskId)
+    readFile('./tasks.json')
+    .then(tasks=> {
+        tasks.forEach((task, index)=> {
+            if(task.id === deletedTaskId){
+                tasks.splice(index, 1)
             }
-        });
-    }
-});
+        })
+        data = JSON.stringify(tasks, null , 2)
+        writeFile ('tasks.json', data)
+        res.redirect('/')
+        })
+    })
+
+app.get('/', (req, res)=> {
+    readFile ('./task.json')
+    .then(tasks => {
+        res.render('index', {
+            tasks: tasks,
+            error: null
+        })
+    })
+})
 
 
 app.listen(3001, () => {
