@@ -8,7 +8,7 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
 
-const tasksFile = './tasks';
+const tasksFile = './tasks.json';
 
 
 const readFile = (filename) => {
@@ -39,8 +39,8 @@ const writeFile = (filename, data) => {
 
 app.use(express.urlencoded({ extended: true }));
 
-
-app.post('/', (req, res)=> {
+app.post('/', (req, res) => {
+    console.log('post')
     let error = null
     if (req.body.task.trim().length==0) {
         error = 'please insert correct task data'
@@ -51,33 +51,31 @@ app.post('/', (req, res)=> {
                 error: error
             })
         })
+    } else {
+        readFile('./tasks.json')
+        .then(tasks => {
+            let index
+            if(tasks.length ===0)
+            {
+                index = 0
+            } else {
+                index = tasks[tasks.length-1].id + 1;
+            }
+            const newTask = {
+                "id" : index,
+                "task" : req.body.task
+            }
+            tasks.push(newTask)
+            data = JSON.stringify(tasks, null, 2)
+            writeFile('tasks.json', data)
+            res.redirect('/')
+            })
     }
-})
-
-
-app.post('/', (req, res) => {
-    readFile('./tasks.json')
-    .then(tasks => {
-        let index
-        if(tasks.lenght ===0)
-        {
-            index = 0
-        } else {
-            index = tasks[tasks.length-1].id + 1;
-        }
-        const newTask = {
-            "id" : index,
-            "task" : req.body.task
-        }
-        tasks.push(newTask)
-        data = JSON.stringify(tasks, null, 2)
-        writeFile('tasks.json', data)
-        res.redirect('/')
-        })
+    
 })
 
 app.get('/delete-task/:taskId', (req, res) => {
-    let deletedTaskId = parsenInt(req.params.taskId)
+    let deletedTaskId = parseInt(req.params.taskId)
     readFile('./tasks.json')
     .then(tasks=> {
         tasks.forEach((task, index)=> {
@@ -92,8 +90,9 @@ app.get('/delete-task/:taskId', (req, res) => {
     })
 
 app.get('/', (req, res)=> {
-    readFile ('./task.json')
+    readFile ('./tasks.json')
     .then(tasks => {
+        console.log(tasks)
         res.render('index', {
             tasks: tasks,
             error: null
